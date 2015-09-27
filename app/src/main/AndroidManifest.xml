@@ -31,7 +31,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".AlarmRingActivity"
+            android:name=".AlarmRingActivity_"
             android:label="@string/title_activity_alarm_ring"
             android:parentActivityName=".MainActivity_" >
             <meta-data

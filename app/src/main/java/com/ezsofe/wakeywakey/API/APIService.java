@@ -19,7 +19,7 @@ public interface APIService {
     String BASE_URL = "http://wakey-wakey-api.herokuapp.com/";
 
     //TODO: Remove hardcode after user is implemented
-    @GET("offline_voice?user_id=5606706a9624c0a085046e60")
+    @GET("offline_voice")
     Call<APIResponse<List<OfflineVoice>>> getOfflineVoices();//@Query("user_id") String user_id);
 
     //TODO: Remove hardcode after user is implemented

@@ -17,6 +17,7 @@ import com.ezsofe.wakeywakey.Voice.VoiceManager;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.Background;
+import org.androidannotations.annotations.Bean;
 import org.androidannotations.annotations.EActivity;
 
 @EActivity(R.layout.activity_main)
@@ -62,7 +63,7 @@ public class MainActivity extends ActionBarActivity {
         // Handle presses on the action bar items
         switch (item.getItemId()) {
             case R.id.action_compose:
-                Intent intent = new Intent(this, AddAlarmActivity_.class);
+                Intent intent = new Intent(this, AlarmRingActivity_.class);
                 this.startActivity(intent);
                 return true;
             default:
