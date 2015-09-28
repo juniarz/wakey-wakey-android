@@ -144,14 +144,30 @@ public class OfflineVoiceManager {
                             public void onCompletion(MediaPlayer mp) {
                                 mp.release();
 
-                                // TODO: Remove hardcode when user is implemented.
-                                setListened(offlineVoice._id, UserManager.currentLoggedInUser.toString());
-
-                                if (!shouldContinue) {
-                                    return;
-                                }
-
-                                playNextAudio();
+                                Thread thread = new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            // TODO: Remove hardcoded value when user is implemented.
+                                            Response<ResponseBody> response = APIManager.getService().setOfflineVoiceListened(offlineVoice._id, UserManager.currentLoggedInUser.toString()).execute();
+                                            if (!response.isSuccess()) {
+                                                Log.e(LOG_TAG, "Failed to update listened. Reason: " + response.message());
+                                            }
+                                            
+                                            if (!shouldContinue) {
+                                                return;
+                                            }
+                                            
+                                            playNextAudio();
+                                            
+                                        } catch (IOException e) {
+                                            Log.e(LOG_TAG, "Failed to update listened.", e);
+                                            playNextAudio();
+                                        }
+                                    }
+                                });
+                        
+                                thread.start();
                             }
                         });
                         mp.prepare();
@@ -167,26 +183,6 @@ public class OfflineVoiceManager {
                 } catch (Exception e) {
                     Log.e(LOG_TAG, "Failed to play voicelist.", e);
                     playNextAudio();
-                }
-            }
-        });
-
-        thread.start();
-    }
-
-    void setListened(final String offlineVoice_id, String user_id) {
-
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    // TODO: Remove hardcoded value when user is implemented.
-                    Response<ResponseBody> response = APIManager.getService().setOfflineVoiceListened(offlineVoice_id, UserManager.currentLoggedInUser.toString()).execute();
-                    if (!response.isSuccess()) {
-                        Log.e(LOG_TAG, "Failed to update listened. Reason: " + response.message());
-                    }
-                } catch (IOException e) {
-                    Log.e(LOG_TAG, "Failed to update listened.", e);
                 }
             }
         });
