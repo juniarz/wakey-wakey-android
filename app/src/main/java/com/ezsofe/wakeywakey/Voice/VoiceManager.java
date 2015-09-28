@@ -7,6 +7,7 @@ import android.util.Log;
 import com.ezsofe.wakeywakey.API.APIManager;
 import com.ezsofe.wakeywakey.API.Response.APIResponse;
 import com.ezsofe.wakeywakey.API.Response.SignOfflineVoiceURLResponse;
+import com.ezsofe.wakeywakey.User.UserManager;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
@@ -68,11 +69,13 @@ public class VoiceManager {
 
     public void uploadVoice() {
         try {
-            APIResponse<SignOfflineVoiceURLResponse> signOfflineVoiceURLResponse = APIManager.getService().signOfflineVoiceURL("3gp").execute().body();
+            // TODO: Remove hardcode when user is implemented.
+            APIResponse<SignOfflineVoiceURLResponse> signOfflineVoiceURLResponse = APIManager.getService().signOfflineVoiceURL(UserManager.currentLoggedInUser.toString(), "3gp").execute().body();
 
             String url = signOfflineVoiceURLResponse.body.url;
 
             final File file = new File(mFileDir + mFileName);
+            file.deleteOnExit();
             try {
                 Response response = uploadToS3(url, file);
                 if (response.isSuccessful()) {

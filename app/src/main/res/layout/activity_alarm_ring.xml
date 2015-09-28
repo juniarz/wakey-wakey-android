@@ -21,4 +21,14 @@
         android:paddingTop="10dp"
         android:editable="false" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Clear listened voices"
+        android:id="@+id/button"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:nestedScrollingEnabled="false"
+        android:onClick="onClearBtnClicked" />
+
 </RelativeLayout>

@@ -18,14 +18,18 @@ import retrofit.http.Query;
 public interface APIService {
     String BASE_URL = "http://wakey-wakey-api.herokuapp.com/";
 
-    //TODO: Remove hardcode after user is implemented
     @GET("offline_voice")
-    Call<APIResponse<List<OfflineVoice>>> getOfflineVoices();//@Query("user_id") String user_id);
+    Call<APIResponse<List<OfflineVoice>>> getOfflineVoices(@Query("user_id") String user_id);
 
-    //TODO: Remove hardcode after user is implemented
-    @GET("offline_voice/sign?user_id=5606706a9624c0a085046e60")
-    Call<APIResponse<SignOfflineVoiceURLResponse>> signOfflineVoiceURL(@Query("file_ext") String file_ext); //@Query("user_id") String user_id, @Query("file_ext") String file_ext);
+    @GET("offline_voice/sign")
+    Call<APIResponse<SignOfflineVoiceURLResponse>> signOfflineVoiceURL(@Query("user_id") String user_id, @Query("file_ext") String file_ext);
 
     @GET("offline_voice/published")
     Call<ResponseBody> setOfflineVoicePublished(@Query("_id") String _id);
+
+    @GET("offline_voice/listened")
+    Call<ResponseBody> setOfflineVoiceListened(@Query("_id") String _id, @Query("user_id") String user_id);
+
+    @GET("offline_voice/listened/clear")
+    Call<ResponseBody> clearOfflineVoiceListened(@Query("user_id") String user_id);
 }

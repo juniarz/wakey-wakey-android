@@ -11,38 +11,56 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.ezsofe.wakeywakey.API.APIManager;
+import com.ezsofe.wakeywakey.User.UserManager;
 import com.ezsofe.wakeywakey.Voice.VoiceManager;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.Background;
 import org.androidannotations.annotations.Bean;
 import org.androidannotations.annotations.EActivity;
+import org.bson.types.ObjectId;
 
 @EActivity(R.layout.activity_main)
 public class MainActivity extends ActionBarActivity {
 
     VoiceManager voiceManager = new VoiceManager();
+    Button recordBtn;
+    boolean isRecording = false;
 
     @AfterViews
     void initRecordButton() {
-        Button b1=(Button)findViewById(R.id.record_btn);
-        b1.setOnTouchListener(new View.OnTouchListener() {
+        recordBtn=(Button)findViewById(R.id.record_btn);
+        recordBtn.setOnTouchListener(new View.OnTouchListener() {
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch(event.getAction()){
                     case MotionEvent.ACTION_DOWN:
-                        voiceManager.startRecording();
+                        if (!isRecording) {
+                            voiceManager.startRecording();
+                            isRecording = true;
+                            recordBtn.setText("RECORDING...");
+                        }
                         break;
                     case MotionEvent.ACTION_UP:
+                        recordBtn.setText("UPLOADING...");
                         stopRecording();
+                        isRecording = false;
+                        recordBtn.setText("RECORD");
                         break;
                 }
                 return false;
             }
         });
+    }
+
+    @AfterViews
+    void showLoggedInUser() {
+        TextView tv = (TextView) findViewById(R.id.textView2);
+        tv.setText("Currently logged-in user: " + UserManager.currentLoggedInUser.toString());
     }
 
     @Background

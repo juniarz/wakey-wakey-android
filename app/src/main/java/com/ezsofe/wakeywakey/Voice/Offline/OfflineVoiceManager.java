@@ -7,6 +7,9 @@ import android.os.Environment;
 import android.util.Log;
 
 import com.ezsofe.wakeywakey.API.APIManager;
+import com.ezsofe.wakeywakey.API.APIService;
+import com.ezsofe.wakeywakey.User.UserManager;
+import com.squareup.okhttp.ResponseBody;
 
 import org.androidannotations.annotations.Background;
 import org.androidannotations.annotations.EBean;
@@ -25,6 +28,7 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import retrofit.Response;
 import retrofit.http.Url;
 
 /**
@@ -40,6 +44,9 @@ public class OfflineVoiceManager {
     MediaPlayer ringtoneMp;
     MediaPlayer mp;
     Iterator<OfflineVoice> voiceQueueIterator;
+    int RETRY_TIME = 1000 * 10; // 10 secs first.
+    int RETRY_COUNT = 0;
+    boolean shouldContinue = false;
 
     public OfflineVoiceManager(Context context) {
         this.context = context;
@@ -54,8 +61,10 @@ public class OfflineVoiceManager {
      * Download the list (skip listened) async
      */
     public void LoadList() {
+        shouldContinue = true;
         try {
-            List<OfflineVoice> voiceList = APIManager.getService().getOfflineVoices().execute().body().body;
+            // TODO: Remove hardcode when user is implemented.
+            List<OfflineVoice> voiceList = APIManager.getService().getOfflineVoices(UserManager.currentLoggedInUser.toString()).execute().body().body;
 
             if (timer != null) {
                 timer.cancel();
@@ -69,9 +78,12 @@ public class OfflineVoiceManager {
                     public void run() {
                         LoadList();
                     }
-                }, 1000 * 60);
+                }, RETRY_TIME + (1000 * RETRY_COUNT++));
                 return;
             }
+
+            RETRY_COUNT = 0;
+
             Queue<OfflineVoice> voiceQueue = new LinkedList<>(voiceList);
             voiceQueueIterator = voiceQueue.iterator();
             playNextAudio();
@@ -98,11 +110,13 @@ public class OfflineVoiceManager {
                             public void run() {
                                 LoadList();
                             }
-                        }, 1000 * 60);
+                        }, RETRY_TIME + (1000 * RETRY_COUNT++));
                         return;
                     }
 
-                    OfflineVoice offlineVoice = voiceQueueIterator.next();
+                    RETRY_COUNT = 0;
+
+                    final OfflineVoice offlineVoice = voiceQueueIterator.next();
                     if (mp != null) {
                         mp.release();
                     }
@@ -128,6 +142,15 @@ public class OfflineVoiceManager {
                         mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                             @Override
                             public void onCompletion(MediaPlayer mp) {
+                                mp.release();
+
+                                // TODO: Remove hardcode when user is implemented.
+                                setListened(offlineVoice._id, UserManager.currentLoggedInUser.toString());
+
+                                if (!shouldContinue) {
+                                    return;
+                                }
+
                                 playNextAudio();
                             }
                         });
@@ -136,11 +159,34 @@ public class OfflineVoiceManager {
                         ringtoneMp.setVolume(0.1f, 0.1f);
                     } catch (IllegalStateException e) {
                         Log.e(LOG_TAG, "Failed to play voicelist.", e);
+                        playNextAudio();
                     } catch (IOException e) {
                         Log.e(LOG_TAG, "Failed to play voicelist.", e);
+                        playNextAudio();
                     }
                 } catch (Exception e) {
                     Log.e(LOG_TAG, "Failed to play voicelist.", e);
+                    playNextAudio();
+                }
+            }
+        });
+
+        thread.start();
+    }
+
+    void setListened(final String offlineVoice_id, String user_id) {
+
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // TODO: Remove hardcoded value when user is implemented.
+                    Response<ResponseBody> response = APIManager.getService().setOfflineVoiceListened(offlineVoice_id, UserManager.currentLoggedInUser.toString()).execute();
+                    if (!response.isSuccess()) {
+                        Log.e(LOG_TAG, "Failed to update listened. Reason: " + response.message());
+                    }
+                } catch (IOException e) {
+                    Log.e(LOG_TAG, "Failed to update listened.", e);
                 }
             }
         });
@@ -157,7 +203,12 @@ public class OfflineVoiceManager {
     }
 
     public void release() {
+        shouldContinue = false;
+
         if (mp != null) {
+            if (mp.isPlaying()) {
+                mp.stop();
+            }
             mp.release();
         }
 
